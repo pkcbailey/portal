@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2025-10-05",
+  "businessUnits": [
+    {
+      "name": "Payments",
+      "baselineIssues": 800,
+      "snapshots": [
+        { "date": "2025-09-07", "openIssues": 800 },
+        { "date": "2025-09-14", "openIssues": 760 },
+        { "date": "2025-09-21", "openIssues": 700 },
+        { "date": "2025-09-28", "openIssues": 640 },
+        { "date": "2025-10-05", "openIssues": 610 }
+      ]
+    },
+    {
+      "name": "CTIO",
+      "baselineIssues": 250,
+      "snapshots": [
+        { "date": "2025-09-07", "openIssues": 250 },
+        { "date": "2025-09-14", "openIssues": 245 },
+        { "date": "2025-09-21", "openIssues": 243 },
+        { "date": "2025-09-28", "openIssues": 240 },
+        { "date": "2025-10-05", "openIssues": 239 }
+      ]
+    },
+    {
+      "name": "Universal Banking Enterprise",
+      "baselineIssues": 320,
+      "snapshots": [
+        { "date": "2025-09-07", "openIssues": 320 },
+        { "date": "2025-09-14", "openIssues": 300 },
+        { "date": "2025-09-21", "openIssues": 280 },
+        { "date": "2025-09-28", "openIssues": 260 },
+        { "date": "2025-10-05", "openIssues": 210 }
+      ]
+    },
+    {
+      "name": "USMM Digital & Core Banking",
+      "baselineIssues": 210,
+      "snapshots": [
+        { "date": "2025-09-07", "openIssues": 210 },
+        { "date": "2025-09-14", "openIssues": 190 },
+        { "date": "2025-09-21", "openIssues": 188 },
+        { "date": "2025-09-28", "openIssues": 170 },
+        { "date": "2025-10-05", "openIssues": 169 }
+      ]
+    },
+    {
+      "name": "Lending",
+      "baselineIssues": 180,
+      "snapshots": [
+        { "date": "2025-09-07", "openIssues": 180 },
+        { "date": "2025-09-14", "openIssues": 172 },
+        { "date": "2025-09-21", "openIssues": 171 },
+        { "date": "2025-09-28", "openIssues": 170 },
+        { "date": "2025-10-05", "openIssues": 168 }
+      ]
+    }
+  ]
+}
