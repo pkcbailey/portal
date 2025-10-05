@@ -1,0 +1,10 @@
+# Optional: create a .gitignore
+cat > .gitignore << 'EOF'
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+.env
+.streamlit/
+*.log
+

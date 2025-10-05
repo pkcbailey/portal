@@ -1,0 +1,322 @@
+{
+  "summary": {
+    "total_hosts_with_populated_entries": 6977,
+    "hosts_with_bigfix": 2969,
+    "combined_hosts_empty_dns": 13422,
+    "hosts_with_populated_entries_from_empty_dns": 1086,
+    "percentage_with_populated_entries": 8.09,
+    "hosts_using_internet_routable_ips": 1821
+  },
+  "business_units": {
+    "CTIO": {
+      "hosts_with_populated_entries": 809,
+      "hosts_with_internet_routable_dns": 223,
+      "systems": [
+        {
+          "hostname": "ctio-web-01",
+          "ip": "10.1.1.10",
+          "dns_servers": ["8.8.8.8", "8.8.4.4"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "ctio-db-01",
+          "ip": "10.1.1.11",
+          "dns_servers": ["168.63.129.16"],
+          "bigfix": false,
+          "issues": ["Empty DNS servers"]
+        },
+        {
+          "hostname": "ctio-app-01",
+          "ip": "10.1.1.12",
+          "dns_servers": ["10.1.1.1", "10.1.1.2"],
+          "bigfix": true,
+          "issues": []
+        },
+        {
+          "hostname": "ctio-monitor-01",
+          "ip": "10.1.1.13",
+          "dns_servers": ["8.8.8.8"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        }
+      ]
+    },
+    "CornerStone": {
+      "hosts_with_populated_entries": 620,
+      "hosts_with_internet_routable_dns": 12,
+      "systems": [
+        {
+          "hostname": "cornerstone-web-01",
+          "ip": "10.2.1.10",
+          "dns_servers": ["168.63.129.16"],
+          "bigfix": true,
+          "issues": ["Empty DNS servers"]
+        },
+        {
+          "hostname": "cornerstone-db-01",
+          "ip": "10.2.1.11",
+          "dns_servers": ["8.8.8.8", "8.8.4.4"],
+          "bigfix": false,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "cornerstone-api-01",
+          "ip": "10.2.1.12",
+          "dns_servers": ["10.2.1.1"],
+          "bigfix": true,
+          "issues": []
+        }
+      ]
+    },
+    "SES Core": {
+      "hosts_with_populated_entries": 109,
+      "hosts_with_internet_routable_dns": 0,
+      "systems": [
+        {
+          "hostname": "ses-core-01",
+          "ip": "10.3.1.10",
+          "dns_servers": ["10.3.1.1"],
+          "bigfix": true,
+          "issues": []
+        },
+        {
+          "hostname": "ses-core-02",
+          "ip": "10.3.1.11",
+          "dns_servers": ["10.3.1.1", "10.3.1.2"],
+          "bigfix": true,
+          "issues": []
+        }
+      ]
+    },
+    "Treasury & Capital Markets": {
+      "hosts_with_populated_entries": 1140,
+      "hosts_with_internet_routable_dns": 140,
+      "systems": [
+        {
+          "hostname": "treasury-web-01",
+          "ip": "10.4.1.10",
+          "dns_servers": ["8.8.8.8"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "treasury-db-01",
+          "ip": "10.4.1.11",
+          "dns_servers": ["168.63.129.16"],
+          "bigfix": false,
+          "issues": ["Empty DNS servers"]
+        },
+        {
+          "hostname": "treasury-api-01",
+          "ip": "10.4.1.12",
+          "dns_servers": ["10.4.1.1"],
+          "bigfix": true,
+          "issues": []
+        },
+        {
+          "hostname": "treasury-trading-01",
+          "ip": "10.4.1.13",
+          "dns_servers": ["8.8.4.4"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        }
+      ]
+    },
+    "Universal Banking Enterprise": {
+      "hosts_with_populated_entries": 709,
+      "hosts_with_internet_routable_dns": 280,
+      "systems": [
+        {
+          "hostname": "ube-web-01",
+          "ip": "10.5.1.10",
+          "dns_servers": ["8.8.8.8", "8.8.4.4"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "ube-app-01",
+          "ip": "10.5.1.11",
+          "dns_servers": ["10.5.1.1"],
+          "bigfix": true,
+          "issues": []
+        },
+        {
+          "hostname": "ube-db-01",
+          "ip": "10.5.1.12",
+          "dns_servers": ["8.8.8.8"],
+          "bigfix": false,
+          "issues": ["Internet-routable DNS"]
+        }
+      ]
+    },
+    "Payments": {
+      "hosts_with_populated_entries": 1557,
+      "hosts_with_internet_routable_dns": 713,
+      "systems": [
+        {
+          "hostname": "payments-web-01",
+          "ip": "10.6.1.10",
+          "dns_servers": ["8.8.8.8"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "payments-api-01",
+          "ip": "10.6.1.11",
+          "dns_servers": ["8.8.4.4"],
+          "bigfix": false,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "payments-db-01",
+          "ip": "10.6.1.12",
+          "dns_servers": ["168.63.129.16"],
+          "bigfix": true,
+          "issues": ["Empty DNS servers"]
+        },
+        {
+          "hostname": "payments-gateway-01",
+          "ip": "10.6.1.13",
+          "dns_servers": ["8.8.8.8", "8.8.4.4"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "payments-processor-01",
+          "ip": "10.6.1.14",
+          "dns_servers": ["10.6.1.1"],
+          "bigfix": true,
+          "issues": []
+        }
+      ]
+    },
+    "USMM Digital & Core Banking": {
+      "hosts_with_populated_entries": 584,
+      "hosts_with_internet_routable_dns": 197,
+      "systems": [
+        {
+          "hostname": "usmm-web-01",
+          "ip": "10.7.1.10",
+          "dns_servers": ["8.8.8.8"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "usmm-core-01",
+          "ip": "10.7.1.11",
+          "dns_servers": ["10.7.1.1"],
+          "bigfix": true,
+          "issues": []
+        },
+        {
+          "hostname": "usmm-api-01",
+          "ip": "10.7.1.12",
+          "dns_servers": ["8.8.4.4"],
+          "bigfix": false,
+          "issues": ["Internet-routable DNS"]
+        }
+      ]
+    },
+    "Lending": {
+      "hosts_with_populated_entries": 1300,
+      "hosts_with_internet_routable_dns": 142,
+      "systems": [
+        {
+          "hostname": "lending-web-01",
+          "ip": "10.8.1.10",
+          "dns_servers": ["8.8.8.8"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "lending-db-01",
+          "ip": "10.8.1.11",
+          "dns_servers": ["168.63.129.16"],
+          "bigfix": false,
+          "issues": ["Empty DNS servers"]
+        },
+        {
+          "hostname": "lending-api-01",
+          "ip": "10.8.1.12",
+          "dns_servers": ["10.8.1.1"],
+          "bigfix": true,
+          "issues": []
+        },
+        {
+          "hostname": "lending-calc-01",
+          "ip": "10.8.1.13",
+          "dns_servers": ["8.8.4.4"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        }
+      ]
+    },
+    "CISO": {
+      "hosts_with_populated_entries": 43,
+      "hosts_with_internet_routable_dns": 16,
+      "systems": [
+        {
+          "hostname": "ciso-monitor-01",
+          "ip": "10.9.1.10",
+          "dns_servers": ["8.8.8.8"],
+          "bigfix": true,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "ciso-siem-01",
+          "ip": "10.9.1.11",
+          "dns_servers": ["10.9.1.1"],
+          "bigfix": true,
+          "issues": []
+        }
+      ]
+    },
+    "UNKNOWN": {
+      "hosts_with_populated_entries": 102,
+      "hosts_with_internet_routable_dns": 98,
+      "systems": [
+        {
+          "hostname": "unknown-host-01",
+          "ip": "10.10.1.10",
+          "dns_servers": ["8.8.8.8"],
+          "bigfix": false,
+          "issues": ["Internet-routable DNS"]
+        },
+        {
+          "hostname": "unknown-host-02",
+          "ip": "10.10.1.11",
+          "dns_servers": ["168.63.129.16"],
+          "bigfix": true,
+          "issues": ["Empty DNS servers"]
+        }
+      ]
+    },
+    "CFO": {
+      "hosts_with_populated_entries": 2,
+      "hosts_with_internet_routable_dns": 0,
+      "systems": [
+        {
+          "hostname": "cfo-report-01",
+          "ip": "10.11.1.10",
+          "dns_servers": ["10.11.1.1"],
+          "bigfix": true,
+          "issues": []
+        }
+      ]
+    },
+    "CTO": {
+      "hosts_with_populated_entries": 1,
+      "hosts_with_internet_routable_dns": 0,
+      "systems": [
+        {
+          "hostname": "cto-dev-01",
+          "ip": "10.12.1.10",
+          "dns_servers": ["10.12.1.1"],
+          "bigfix": true,
+          "issues": []
+        }
+      ]
+    }
+  }
+}
