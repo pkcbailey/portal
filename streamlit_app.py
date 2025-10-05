@@ -28,6 +28,69 @@ def fetch_data(endpoint):
         st.error(f"Error fetching data: {e}")
         return None
 
+def load_sample_progress():
+    """Load BU progress (mock). If progress.json exists, use it; else fallback sample."""
+    try:
+        import os
+        if os.path.exists('progress.json'):
+            with open('progress.json', 'r') as f:
+                return json.load(f)
+    except Exception:
+        pass
+    # Fallback sample
+    return {
+        "generatedAt": "2025-10-05",
+        "businessUnits": [
+            {"name": "Payments", "baselineIssues": 800, "snapshots": [
+                {"date": "2025-09-07", "openIssues": 800},
+                {"date": "2025-09-14", "openIssues": 760},
+                {"date": "2025-09-21", "openIssues": 700},
+                {"date": "2025-09-28", "openIssues": 640},
+                {"date": "2025-10-05", "openIssues": 610}
+            ]},
+            {"name": "CTIO", "baselineIssues": 250, "snapshots": [
+                {"date": "2025-09-07", "openIssues": 250},
+                {"date": "2025-09-14", "openIssues": 245},
+                {"date": "2025-09-21", "openIssues": 243},
+                {"date": "2025-09-28", "openIssues": 240},
+                {"date": "2025-10-05", "openIssues": 239}
+            ]},
+            {"name": "Universal Banking Enterprise", "baselineIssues": 320, "snapshots": [
+                {"date": "2025-09-07", "openIssues": 320},
+                {"date": "2025-09-14", "openIssues": 300},
+                {"date": "2025-09-21", "openIssues": 280},
+                {"date": "2025-09-28", "openIssues": 260},
+                {"date": "2025-10-05", "openIssues": 210}
+            ]},
+            {"name": "USMM Digital & Core Banking", "baselineIssues": 210, "snapshots": [
+                {"date": "2025-09-07", "openIssues": 210},
+                {"date": "2025-09-14", "openIssues": 190},
+                {"date": "2025-09-21", "openIssues": 188},
+                {"date": "2025-09-28", "openIssues": 170},
+                {"date": "2025-10-05", "openIssues": 169}
+            ]},
+            {"name": "Lending", "baselineIssues": 180, "snapshots": [
+                {"date": "2025-09-07", "openIssues": 180},
+                {"date": "2025-09-14", "openIssues": 172},
+                {"date": "2025-09-21", "openIssues": 171},
+                {"date": "2025-09-28", "openIssues": 170},
+                {"date": "2025-10-05", "openIssues": 168}
+            ]},
+        ]
+    }
+
+def compute_progress_status(baseline: int, latest: int):
+    """Return (percent_reduction_float, status_str in {green,yellow,red})."""
+    base = max(1, baseline)
+    reduced = max(0, base - max(0, latest))
+    pct = (reduced / base) * 100.0
+    status = 'red'
+    if pct >= 25:
+        status = 'green'
+    elif pct >= 10:
+        status = 'yellow'
+    return pct, status
+
 def main():
     st.title("🌐 DNS Issues Dashboard")
     st.markdown("---")
@@ -38,26 +101,79 @@ def main():
     # Sidebar for navigation
     st.sidebar.title("Navigation")
     
-    # Main page selector
-    page = st.sidebar.selectbox(
-        "Choose a page:",
-        ["Issues Identified", "System Details", "Issues Analysis"]
+    # Inject minimal CSS to modernize sidebar cards/badges
+    st.sidebar.markdown(
+        """
+        <style>
+        .bu-pill {background: #1f6feb14; color: #58a6ff; padding: 6px 10px; border-radius: 999px; font-size: 12px; margin-left: 6px;}
+        .bu-card {padding: 8px 10px; border-radius: 10px; border: 1px solid #30363d; margin-bottom: 6px; cursor: pointer;}
+        .bu-card:hover {background: #161b22; border-color: #3b434c;}
+        .bu-selected {background: #0d1117; border-color: #58a6ff;}
+        .bu-header {display:flex; align-items:center; justify-content:space-between}
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
     
-    # Business Units in sidebar
+    # Main page selector
+    page = st.sidebar.radio(
+        "Choose a page:",
+        ["Issues Identified", "System Details", "Issues Analysis"],
+        horizontal=False,
+        index=0,
+        key="page_selector",
+    )
+    
+    # Initialize session state for selected business unit
+    if "selected_bu" not in st.session_state:
+        st.session_state.selected_bu = None
+    
+    # Business Units in sidebar (search + select)
     if bu_data:
         st.sidebar.markdown("---")
         st.sidebar.subheader("🏢 Business Units")
         
-        # Create clickable business unit buttons
-        selected_bu = None
-        for bu_name, data in bu_data.items():
-            if st.sidebar.button(f"{bu_name} ({data['total_systems']} systems)", key=f"bu_{bu_name}"):
-                selected_bu = bu_name
+        # Search box for BU
+        search_query = st.sidebar.text_input("Search business units", value="", placeholder="Type to filter...", key="bu_search")
         
-        # If a business unit is selected, show its details
-        if selected_bu:
-            show_business_unit_details(selected_bu)
+        # Sorted, filtered BU list
+        bu_items = [
+            {
+                "name": bu,
+                "total": data["total_systems"],
+                "populated": data["hosts_with_populated_entries"],
+                "external": data["hosts_with_internet_routable_dns"],
+            }
+            for bu, data in bu_data.items()
+        ]
+        if search_query.strip():
+            q = search_query.strip().lower()
+            bu_items = [b for b in bu_items if q in b["name"].lower()]
+        bu_items = sorted(bu_items, key=lambda x: x["total"], reverse=True)
+        
+        # Compact selectbox for quick jump
+        bu_names = [b["name"] for b in bu_items]
+        quick_select = st.sidebar.selectbox("Quick select", ["-"] + bu_names, key="bu_quick_select")
+        if quick_select != "-":
+            st.session_state.selected_bu = quick_select
+        
+        # Render as styled cards
+        for item in bu_items:
+            is_selected = st.session_state.selected_bu == item["name"]
+            card_class = "bu-card bu-selected" if is_selected else "bu-card"
+            st.sidebar.markdown(
+                f"<div class='{card_class}' onclick=\"window.parent.postMessage({{'setBu':'{item['name']}' }}, '*')\">"
+                f"<div class='bu-header'><strong>{item['name']}</strong>"
+                f"<span class='bu-pill'>{item['total']} systems</span></div>"
+                f"<div style='font-size:12px; opacity:.8; margin-top:4px'>"
+                f"Host files: {item['populated']} · External DNS: {item['external']}"
+                f"</div></div>",
+                unsafe_allow_html=True,
+            )
+        
+        # Fallback click support via selectbox or persisted state
+        if st.session_state.selected_bu:
+            show_business_unit_details(st.session_state.selected_bu)
             return
     
     # Main page routing
@@ -109,21 +225,61 @@ def show_overview():
         )
     
     # Additional metrics - moved BigFix to bottom as less important
-    col5, col6 = st.columns(2)
-    
-    with col5:
-        st.metric(
-            label="Total Systems with BigFix in Hosts File",
-            value=f"{summary_data['hosts_with_bigfix']:,}",
-            help="Systems that have 'bigfix' in hostsFileEntries"
+    st.markdown("")
+    st.metric(
+        label="Total Systems with BigFix in Hosts File",
+        value=f"{summary_data['hosts_with_bigfix']:,}",
+        help="Systems that have 'bigfix' in hostsFileEntries"
+    )
+
+    # BU Progress section (Red/Yellow/Green) - shown before BU Distribution
+    bu_data = fetch_data("business-units")
+    if bu_data:
+        st.subheader("🏁 BU Progress Toward Resolution")
+        progress = load_sample_progress()
+
+        # Minimal CSS for cards and R/Y/G backgrounds
+        st.markdown(
+            """
+            <style>
+            .prog-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap:12px; }
+            .prog-card { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:12px; }
+            .prog-head { display:flex; align-items:baseline; justify-content:space-between; }
+            .pill { background:#1f6feb14; color:#58a6ff; border-radius:999px; padding:4px 8px; font-size:12px; }
+            .meter { position:relative; height:8px; background:#21262d; border:1px solid #30363d; border-radius:999px; overflow:hidden; margin-top:8px; }
+            .bar { position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg,#1f883d,#2ea043); }
+            .status { margin-top:8px; font-weight:600; padding:2px 6px; border-radius:6px; font-size:12px; display:inline-block; }
+            .green { background:#1f883d22; color:#238636; border:1px solid #1f883d55; }
+            .yellow{ background:#9e6a0322; color:#9e6a03; border:1px solid #9e6a0355; }
+            .red   { background:#d1242f22; color:#d1242f; border:1px solid #d1242f55; }
+            .muted { color:#8b949e; font-size:12px; }
+            </style>
+            """,
+            unsafe_allow_html=True,
         )
-    
-    with col6:
-        st.metric(
-            label="",
-            value="",
-            help=""
-        )
+
+        # Build cards from progress data, preserving any BUs present in bu_data
+        by_name = {b["name"]: b for b in progress.get("businessUnits", [])}
+        cards_html = ["<div class='prog-grid'>"]
+        for bu_name in sorted(bu_data.keys()):
+            rec = by_name.get(bu_name)
+            if not rec:
+                continue
+            baseline = rec.get("baselineIssues", 0)
+            latest = rec.get("snapshots", [{}])[-1].get("openIssues", baseline)
+            pct, status = compute_progress_status(baseline, latest)
+            width = max(0.0, min(100.0, pct))
+            cards_html.append(
+                f"<div class='prog-card'>"
+                f"<div class='prog-head'><div><b>{bu_name}</b></div>"
+                f"<div class='pill'>{pct:.1f}% resolved</div></div>"
+                f"<div class='muted'>Baseline: {baseline:,} · Open now: {latest:,}</div>"
+                f"<div class='meter'><div class='bar' style='width:{width:.1f}%'></div></div>"
+                f"<span class='status {status}'>{status.upper()}</span>"
+                f"</div>"
+            )
+        cards_html.append("</div>")
+        st.markdown("\n".join(cards_html), unsafe_allow_html=True)
     
     # Fetch business unit data for charts
     bu_data = fetch_data("business-units")
