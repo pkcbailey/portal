@@ -3,17 +3,17 @@
 """
 Azure DNS Zone Record Export Script
 
-This script uses Service Principal (SPN) credentials to authenticate with Azure,
+This script uses Azure Managed Identity to authenticate with Azure,
 then enumerates all subscriptions, resource groups, DNS zones (public and private),
 and exports all record sets to a CSV file.
+
+When running on Azure (VM, App Service, etc.), it uses the Managed Identity.
+When running locally, it falls back to Azure CLI authentication.
 
 Usage:
     ./azure_dns_export.py --output dns_records.csv
 
-Environment Variables (or command-line arguments):
-    AZURE_CLIENT_ID       - Service Principal Client ID
-    AZURE_CLIENT_SECRET   - Service Principal Client Secret
-    AZURE_TENANT_ID       - Azure Tenant ID
+Environment Variables (optional):
     AZURE_SUBSCRIPTION_ID - (Optional) Specific subscription ID to limit scope
 """
 
@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 try:
-    from azure.identity import ClientSecretCredential
+    from azure.identity import DefaultAzureCredential
     from azure.mgmt.resource import ResourceManagementClient
     from azure.mgmt.dns import DnsManagementClient
     from azure.mgmt.privatedns import PrivateDnsManagementClient
@@ -74,27 +74,24 @@ class AzureDNSExporter:
 
     def __init__(
         self,
-        client_id: str,
-        client_secret: str,
-        tenant_id: str,
         subscription_id: Optional[str] = None,
     ):
         """
-        Initialize Azure DNS Exporter with SPN credentials
+        Initialize Azure DNS Exporter with Managed Identity
+
+        Uses DefaultAzureCredential which tries:
+        1. Managed Identity (if running on Azure)
+        2. Azure CLI (if logged in locally)
+        3. Visual Studio Code
+        4. Azure PowerShell
+        5. Other credential sources
 
         Args:
-            client_id: Service Principal Client ID
-            client_secret: Service Principal Client Secret
-            tenant_id: Azure Tenant ID
             subscription_id: Optional specific subscription ID to limit scope
         """
-        self.tenant_id = tenant_id
         self.subscription_id = subscription_id
-        self.credential = ClientSecretCredential(
-            tenant_id=tenant_id,
-            client_id=client_id,
-            client_secret=client_secret,
-        )
+        print("Authenticating with Azure using Managed Identity...")
+        self.credential = DefaultAzureCredential()
         self.resource_client: Optional[ResourceManagementClient] = None
         self.dns_client: Optional[DnsManagementClient] = None
         self.private_dns_client: Optional[PrivateDnsManagementClient] = None
@@ -409,7 +406,6 @@ class AzureDNSExporter:
             Number of records exported
         """
         print("Starting Azure DNS export...")
-        print(f"Tenant ID: {self.tenant_id}")
 
         # Get subscriptions
         subscriptions = self._list_subscriptions()
@@ -499,7 +495,7 @@ class AzureDNSExporter:
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(
-        description="Export all Azure DNS records to CSV using Service Principal authentication"
+        description="Export all Azure DNS records to CSV using Azure Managed Identity"
     )
     parser.add_argument(
         "--output",
@@ -509,59 +505,24 @@ def parse_args() -> argparse.Namespace:
         help="Output CSV file path (default: azure_dns_records.csv)",
     )
     parser.add_argument(
-        "--client-id",
-        help="Service Principal Client ID (or set AZURE_CLIENT_ID env var)",
-    )
-    parser.add_argument(
-        "--client-secret",
-        help="Service Principal Client Secret (or set AZURE_CLIENT_SECRET env var)",
-    )
-    parser.add_argument(
-        "--tenant-id",
-        help="Azure Tenant ID (or set AZURE_TENANT_ID env var)",
-    )
-    parser.add_argument(
         "--subscription-id",
         help="Optional: Limit to specific subscription ID (or set AZURE_SUBSCRIPTION_ID env var)",
     )
     return parser.parse_args()
 
 
-def get_credentials(args: argparse.Namespace) -> tuple[str, str, str, Optional[str]]:
-    """Get credentials from args or environment variables"""
-    client_id = args.client_id or os.getenv("AZURE_CLIENT_ID")
-    client_secret = args.client_secret or os.getenv("AZURE_CLIENT_SECRET")
-    tenant_id = args.tenant_id or os.getenv("AZURE_TENANT_ID")
-    subscription_id = args.subscription_id or os.getenv("AZURE_SUBSCRIPTION_ID")
-
-    if not client_id:
-        raise ValueError(
-            "Client ID required. Set --client-id or AZURE_CLIENT_ID environment variable."
-        )
-    if not client_secret:
-        raise ValueError(
-            "Client Secret required. Set --client-secret or AZURE_CLIENT_SECRET environment variable."
-        )
-    if not tenant_id:
-        raise ValueError(
-            "Tenant ID required. Set --tenant-id or AZURE_TENANT_ID environment variable."
-        )
-
-    return client_id, client_secret, tenant_id, subscription_id
+def get_subscription_id(args: argparse.Namespace) -> Optional[str]:
+    """Get subscription ID from args or environment variables"""
+    return args.subscription_id or os.getenv("AZURE_SUBSCRIPTION_ID")
 
 
 def main() -> None:
     """Main entry point"""
     try:
         args = parse_args()
-        client_id, client_secret, tenant_id, subscription_id = get_credentials(args)
+        subscription_id = get_subscription_id(args)
 
-        exporter = AzureDNSExporter(
-            client_id=client_id,
-            client_secret=client_secret,
-            tenant_id=tenant_id,
-            subscription_id=subscription_id,
-        )
+        exporter = AzureDNSExporter(subscription_id=subscription_id)
 
         record_count = exporter.export_all_records(args.output)
         sys.exit(0 if record_count > 0 else 1)
@@ -571,6 +532,8 @@ def main() -> None:
         sys.exit(130)
     except Exception as e:
         print(f"\nError: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 
