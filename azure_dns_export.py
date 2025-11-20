@@ -127,16 +127,19 @@ class AzureDNSExporter:
 
             sub_client = SubscriptionClient(self.credential)
             subscriptions = []
+            print("Discovering accessible subscriptions...")
             for sub in sub_client.subscriptions.list():
-                subscriptions.append(
-                    {
-                        "subscription_id": sub.subscription_id,
-                        "subscription_name": sub.display_name or sub.subscription_id,
-                    }
-                )
+                sub_info = {
+                    "subscription_id": sub.subscription_id,
+                    "subscription_name": sub.display_name or sub.subscription_id,
+                }
+                subscriptions.append(sub_info)
+                print(f"  Found subscription: {sub_info['subscription_name']} ({sub_info['subscription_id']})")
             return subscriptions
         except Exception as e:
             print(f"Error listing subscriptions: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     def _list_resource_groups(
@@ -155,44 +158,38 @@ class AzureDNSExporter:
             print(f"Error listing resource groups in {subscription_id}: {e}")
             return []
 
-    def _list_public_dns_zones(
-        self, subscription_id: str, resource_group: str
-    ) -> List[str]:
-        """List all public DNS zones in a resource group"""
+    def _list_all_public_dns_zones(
+        self, subscription_id: str
+    ) -> List[Dict[str, str]]:
+        """List all public DNS zones in a subscription"""
         try:
             dns_client = self._get_dns_client(subscription_id)
             zones = []
-            for zone in dns_client.zones.list_by_resource_group(resource_group):
-                zones.append(zone.name)
+            for zone in dns_client.zones.list():
+                zones.append({
+                    "name": zone.name,
+                    "resource_group": zone.id.split("/resourceGroups/")[1].split("/")[0] if "/resourceGroups/" in zone.id else "unknown"
+                })
             return zones
-        except HttpResponseError as e:
-            if e.status_code == 404:
-                return []
-            print(f"Error listing public DNS zones in {resource_group}: {e}")
-            return []
         except Exception as e:
-            print(f"Error listing public DNS zones in {resource_group}: {e}")
+            print(f"Error listing public DNS zones in subscription {subscription_id}: {e}")
             return []
 
-    def _list_private_dns_zones(
-        self, subscription_id: str, resource_group: str
-    ) -> List[str]:
-        """List all private DNS zones in a resource group"""
+    def _list_all_private_dns_zones(
+        self, subscription_id: str
+    ) -> List[Dict[str, str]]:
+        """List all private DNS zones in a subscription"""
         try:
             private_dns_client = self._get_private_dns_client(subscription_id)
             zones = []
-            for zone in private_dns_client.private_zones.list_by_resource_group(
-                resource_group
-            ):
-                zones.append(zone.name)
+            for zone in private_dns_client.private_zones.list():
+                zones.append({
+                    "name": zone.name,
+                    "resource_group": zone.id.split("/resourceGroups/")[1].split("/")[0] if "/resourceGroups/" in zone.id else "unknown"
+                })
             return zones
-        except HttpResponseError as e:
-            if e.status_code == 404:
-                return []
-            print(f"Error listing private DNS zones in {resource_group}: {e}")
-            return []
         except Exception as e:
-            print(f"Error listing private DNS zones in {resource_group}: {e}")
+            print(f"Error listing private DNS zones in subscription {subscription_id}: {e}")
             return []
 
     def _get_record_sets_public(
@@ -435,33 +432,33 @@ class AzureDNSExporter:
             sub_name = sub_info["subscription_name"]
             print(f"\nProcessing subscription: {sub_name} ({sub_id})")
 
-            # Get resource groups
-            resource_groups = self._list_resource_groups(sub_id)
-            print(f"  Found {len(resource_groups)} resource group(s)")
+            # Get all public DNS zones in this subscription
+            public_zones = self._list_all_public_dns_zones(sub_id)
+            print(f"  Found {len(public_zones)} public DNS zone(s)")
 
-            # Iterate through resource groups
-            for rg in resource_groups:
-                print(f"  Processing resource group: {rg}")
+            for zone_info in public_zones:
+                zone_name = zone_info["name"]
+                rg = zone_info["resource_group"]
+                print(f"    Processing public DNS zone: {zone_name} (RG: {rg})")
+                records = self._get_record_sets_public(
+                    sub_id, sub_name, rg, zone_name
+                )
+                all_records.extend(records)
+                print(f"      Found {len(records)} record(s)")
 
-                # Get public DNS zones
-                public_zones = self._list_public_dns_zones(sub_id, rg)
-                for zone in public_zones:
-                    print(f"    Processing public DNS zone: {zone}")
-                    records = self._get_record_sets_public(
-                        sub_id, sub_name, rg, zone
-                    )
-                    all_records.extend(records)
-                    print(f"      Found {len(records)} record(s)")
+            # Get all private DNS zones in this subscription
+            private_zones = self._list_all_private_dns_zones(sub_id)
+            print(f"  Found {len(private_zones)} private DNS zone(s)")
 
-                # Get private DNS zones
-                private_zones = self._list_private_dns_zones(sub_id, rg)
-                for zone in private_zones:
-                    print(f"    Processing private DNS zone: {zone}")
-                    records = self._get_record_sets_private(
-                        sub_id, sub_name, rg, zone
-                    )
-                    all_records.extend(records)
-                    print(f"      Found {len(records)} record(s)")
+            for zone_info in private_zones:
+                zone_name = zone_info["name"]
+                rg = zone_info["resource_group"]
+                print(f"    Processing private DNS zone: {zone_name} (RG: {rg})")
+                records = self._get_record_sets_private(
+                    sub_id, sub_name, rg, zone_name
+                )
+                all_records.extend(records)
+                print(f"      Found {len(records)} record(s)")
 
         # Write to CSV
         print(f"\nWriting {len(all_records)} record(s) to {output_path}")
